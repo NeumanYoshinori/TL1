@@ -15,6 +15,14 @@ bl_info = {
     "category": "Object"
 }
 
+# メニュー項目描画
+def draw_menu_manual(self, context):
+    #self : 呼び出し元の暮らすインスタンス。C++でいうthisポインタ
+    #context : カーソルを合わせたときのポップアップのカスタマイズなどに使用
+
+    #トップバーの「エディターメニュー」に項目（オペレータ）を追加
+    self.layout.operator("wm.url_open_preset", text="Manual", icon='HELP')
+
 #オペレータ　頂点を伸ばす
 class MYADDON_OT_stretch_vertex(bpy.types.Operator):
     bl_idname = "myaddon.myaddon_ot_stretch_vertex"
@@ -25,8 +33,9 @@ class MYADDON_OT_stretch_vertex(bpy.types.Operator):
 
     #メニューを実行したときに呼ばれるコールバック関数
     def execute(self, context):
-        bpy.data.objects["Cube"].data.vertices[0].co.x += 1.0
-        print("頂点を伸ばしました。")
+        if (bpy.data.objects.get("Cube")):
+            bpy.data.objects["Cube"].data.vertices[0].co.x += 1.0
+            print("頂点を伸ばしました。")
 
         #オペレータの命令終了を通知
         return {'FINISHED'}
@@ -91,6 +100,21 @@ class TOPBAR_MT_my_menu(bpy.types.Menu):
     #著者表示用の文字列
     bl_description = "拡張メニュー by " + bl_info["author"]
 
+    # サブメニューの描画
+    def draw(self, context):
+
+        #トップバーの「エディタメニュー」に項目（オペレータ）を追加
+        self.layout.operator(MYADDON_OT_stretch_vertex.bl_idname,
+            text=MYADDON_OT_stretch_vertex.bl_label)
+        
+        #トップバーの「エディタメニュー」に項目（オペレータ）を追加
+        self.layout.operator(MYADDON_OT_create_ico_sphere.bl_idname,
+            text=MYADDON_OT_create_ico_sphere.bl_label)
+        
+        #トップバーの「エディタメニュー」に項目（オペレータ）を追加
+        self.layout.operator(MYADDON_OT_export_scene.bl_idname,
+            text=MYADDON_OT_export_scene.bl_label)
+
 # Blenderに登録するクラスリスト
 classes = (
     MYADDON_OT_stretch_vertex,
@@ -99,21 +123,6 @@ classes = (
     TOPBAR_MT_my_menu,
 )
 
-# サブメニューの描画
-def draw(self, context):
-
-    #トップバーの「エディタメニュー」に項目（オペレータ）を追加
-    self.layout.operator(MYADDON_OT_stretch_vertex.bl_idname,
-        text=MYADDON_OT_stretch_vertex.bl_label)
-    
-    #トップバーの「エディタメニュー」に項目（オペレータ）を追加
-    self.layout.operator(MYADDON_OT_create_ico_sphere.bl_idname,
-        text=MYADDON_OT_create_ico_sphere.bl_label)
-    
-    #トップバーの「エディタメニュー」に項目（オペレータ）を追加
-    self.layout.operator(MYADDON_OT_export_scene.bl_idname,
-        text=MYADDON_OT_export_scene.bl_label)
-    
 # 既存のメニューにサブメニューを追加
 def submenu(self, context):
 
@@ -127,13 +136,13 @@ def register():
         bpy.utils.register_class(cls)
 
     #メニューに項目を追加
-    bpy.types.TOPBAR_MT_editor_menus.append(TOPBAR_MT_my_menu.submenu)
+    bpy.types.TOPBAR_MT_editor_menus.append(submenu)
     print("レベルエディタが有効化されました。")
 
 #Add-On無効化時コールバック
 def unregister():
     #メニューから項目を削除
-    bpy.types.TOPBAR_MT_editor_menus.remove(TOPBAR_MT_my_menu.submenu)
+    bpy.types.TOPBAR_MT_editor_menus.remove(submenu)
     
     # Blenderからクラスを削除
     for cls in classes:
