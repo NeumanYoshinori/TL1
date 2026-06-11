@@ -38,6 +38,20 @@ class MYADDON_OT_stretch_vertex(bpy.types.Operator):
         #オペレータの命令終了を通知
         return {'FINISHED'}
 
+#オペレータ ICO球生成  
+class MYADDON_OT_create_ico_sphere(bpy.types.Operator):
+    bl_idname = "myaddon.myaddon_ot_create_object"
+    bl_label = "ICO球生成"
+    bl_description = "ICO球を生成します"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    # メニューを実行したときに呼ばれる関数
+    def execute(self, context):
+        bpy.ops.mesh.primitive_ico_sphere_add()
+        print("ICO球を生成しました")
+
+        return {'FINISHED'}
+
 #トップバーの拡張メニュー
 class TOPBAR_MT_my_menu(bpy.types.Menu):
     #Blenderがクラスを識別する為の固有の文字列
@@ -54,6 +68,10 @@ class TOPBAR_MT_my_menu(bpy.types.Menu):
         self.layout.operator(MYADDON_OT_stretch_vertex.bl_idname,
             text=MYADDON_OT_stretch_vertex.bl_label)
         
+        #トップバーの「エディタメニュー」に項目（オペレータ）を追加
+        self.layout.operator(MYADDON_OT_create_ico_sphere.bl_idname,
+            text=MYADDON_OT_create_ico_sphere.bl_label)
+        
     # 既存のメニューにサブメニューを追加
     def submenu(self, context):
 
@@ -63,6 +81,7 @@ class TOPBAR_MT_my_menu(bpy.types.Menu):
 # Blenderに登録するクラスリスト
 classes = (
     MYADDON_OT_stretch_vertex,
+    MYADDON_OT_create_ico_sphere,
     TOPBAR_MT_my_menu,
 )
 
@@ -80,7 +99,7 @@ def register():
 def unregister():
     #メニューから項目を削除
     bpy.types.TOPBAR_MT_editor_menus.remove(TOPBAR_MT_my_menu.submenu)
-
+    
     # Blenderからクラスを削除
     for cls in classes:
         bpy.utils.unregister_class(cls)
