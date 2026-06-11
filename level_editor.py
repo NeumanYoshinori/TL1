@@ -79,7 +79,7 @@ def register():
 #Add-On無効化時コールバック
 def unregister():
     #メニューから項目を削除
-    bpy.types.TOPBAR_MT_editor_menus.remove(draw_menu_manual)
+    bpy.types.TOPBAR_MT_editor_menus.remove(TOPBAR_MT_my_menu.submenu)
     print("レベルエディタが無効化されました。")
 
 #テスト実行用コード
