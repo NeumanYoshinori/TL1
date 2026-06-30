@@ -70,7 +70,7 @@ class MYADDON_OT_export_scene(bpy.types.Operator, bpy_extras.io_utils.ExportHelp
             indent += "\t"
 
         #オブジェクト名書き込み
-        self.write_and_print(file, indent + object.type + " - " + object.name)
+        self.write_and_print(file, indent + object.type)
         trans, rot, scale = object.matrix_local.decompose()
         #回転を Quaternion から Euler （3軸での回転角）に変換
         rot = rot.to_euler()
@@ -79,11 +79,15 @@ class MYADDON_OT_export_scene(bpy.types.Operator, bpy_extras.io_utils.ExportHelp
         rot.y = math.degrees(rot.y)
         rot.z = math.degrees(rot.z)
         #トランスフォーム情報を表示
-        self.write_and_print(file, indent + "Trans(%f,%f,%f)" % (trans.x, trans.y, trans.z) )
-        self.write_and_print(file, indent + "Rot(%f,%f,%f)" % (rot.x, rot.y, rot.z) )
-        self.write_and_print(file, indent + "scale(%f,%f,%f)" %  (scale.x, scale.y, scale.z) )
+        self.write_and_print(file, indent + "T %f %f %f" % (trans.x, trans.y, trans.z) )
+        self.write_and_print(file, indent + "R %f %f %f" % (rot.x, rot.y, rot.z) )
+        self.write_and_print(file, indent + "S %f %f %f" % (scale.x, scale.y, scale.z) )
+        #カスタムプロパティ 'file_name'
+        if "file_name" in object:
+            self.write_and_print(file, indent + "N %s" % object["file_name"])
+        self.write_and_print(file, indent + 'END')
         self.write_and_print(file, '')
-
+        
         #子ノードへ進む(深さが1上がる)
         for child in object.children:
             self.parse_scene_recursive(file, child, level + 1)
@@ -147,12 +151,46 @@ class TOPBAR_MT_my_menu(bpy.types.Menu):
         self.layout.operator(MYADDON_OT_export_scene.bl_idname,
             text=MYADDON_OT_export_scene.bl_label)
 
+#パネル　ファイル名  
+class OBJECT_PT_file_name(bpy.types.Panel):
+    """オブジェクトのファイルネームパネル"""
+    bl_idname = "OBJECT_PT_file_name"
+    bl_label = "FileName"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+
+    def draw(self, context):
+
+        #パネルに項目を追加
+        if "file_name" in context.object:
+            #既にプロパティがあれば、プロパティを表示
+            self.layout.prop(context.object, '["file_name"]', text=self.bl_label)
+        else:
+            #プロパティがなければ、プロパティ追加ボタンを表示
+            self.layout.operator(MYADDON_OT_add_filename.bl_idname)
+
+class MYADDON_OT_add_filename(bpy.types.Operator):
+    bl_idname = "myaddon.myaddon_ot_add_filename"
+    bl_label = "FileName 追加"
+    bl_description = "['file name']カスタムプロパティを追加します"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+
+        #['file_name']カスタムプロパティを追加
+        context.object["file_name"] = ""
+
+        return {"FINISHED"}
+
 # Blenderに登録するクラスリスト
 classes = (
     MYADDON_OT_stretch_vertex,
     MYADDON_OT_create_ico_sphere,
     MYADDON_OT_export_scene,
     TOPBAR_MT_my_menu,
+    MYADDON_OT_add_filename,
+    OBJECT_PT_file_name,
 )
 
 # メニュー項目描画
