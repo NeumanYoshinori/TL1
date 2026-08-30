@@ -1,0 +1,82 @@
+#include "Input.h"
+#include <cassert>
+#include "WinApp.h"
+
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
+
+using namespace std;
+
+unique_ptr<Input> Input::instance_ = nullptr;
+
+Input* Input::GetInstance() {
+	if (instance_ == nullptr) {
+		instance_ = make_unique<Input>(ConstructorKey());
+	}
+	return instance_.get();
+}
+
+void Input::Initialize() {
+	HRESULT result;
+	result = DirectInput8Create(WinApp::GetInstance()->GetHInstance(), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
+	assert(SUCCEEDED(result));
+
+	// キーボードデバイスの生成
+	result = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
+	assert(SUCCEEDED(result));
+
+	// 入力データ形式のセット
+	result = keyboard->SetDataFormat(&c_dfDIKeyboard); // 標準形式
+	assert(SUCCEEDED(result));
+
+	// 排他制御レベルのセット
+	result = keyboard->SetCooperativeLevel(WinApp::GetInstance()->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
+	assert(SUCCEEDED(result));
+}
+
+void Input::Update() {
+	// 前回のキー入力を保持
+	memcpy(keyPre, key, sizeof(key));
+
+	// キーボード情報の取得開始
+	keyboard->Acquire();
+
+	keyboard->GetDeviceState(sizeof(key), key);
+}
+
+bool Input::PushKey(BYTE keyNumber) {
+	// 指定キーを押していればtrueを返す
+	if (key[keyNumber]) {
+		return true;
+	}
+	// そうでなければfalseを返す
+	return false;
+}
+
+bool Input::NotPushKey(BYTE keyNumber) {
+	// 指定キーを押していればtrueを返す
+	if (!key[keyNumber]) {
+		return true;
+	}
+	// そうでなければfalseを返す
+	return false;
+
+}
+
+bool Input::TriggerKey(BYTE keyNumber) {
+	// 指定キーを押した瞬間trueを返す
+	if (!keyPre[keyNumber] && key[keyNumber]) {
+		return true;
+	}
+	// そうでなければfalseを返す
+	return false;
+}
+
+bool Input::ReleaseKey(BYTE keyNumber) {
+	// 指定キーを離した瞬間trueを返す
+	if (keyPre[keyNumber] && !key[keyNumber]) {
+		return true;
+	}
+	// そうでなければfalseを返す
+	return false;
+}
